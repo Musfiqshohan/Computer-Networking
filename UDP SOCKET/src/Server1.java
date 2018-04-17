@@ -6,8 +6,65 @@ import java.net.*;
 
 
 
-public class Server2 extends  Thread{
+class NodeInfo {
+    String dest,nextHop ;
+    int cost;
 
+    NodeInfo(String dest, String nextHop, int cost) {
+        this.dest = dest;
+        this.nextHop = nextHop;
+        this.cost = cost;
+    }
+
+    String retNodeInfo()
+    {
+        String ret="";
+        ret=dest+" "+nextHop+" "+cost;
+        return ret;
+    }
+
+
+}
+
+class Router {
+
+    int port,Rid;
+
+    NodeInfo routingTable[] = new NodeInfo[10];
+
+
+    Router(int myid, String port) {
+        this.Rid = myid;
+        this.port = Integer.valueOf(port);
+
+        for (int i = 0; i < 10; i++) {
+            String dest = "";
+            dest += (char) (i + 65);
+
+            if (i == myid) {
+                routingTable[i] = new NodeInfo(dest, dest, 0);
+            }
+            else
+                routingTable[i] = new NodeInfo(dest, "X", 100000);
+        }
+    }
+
+
+
+    void printRouter()
+    {
+        System.out.println(Rid+" "+port);
+        for(int i=0;i<10;i++)
+        {
+            System.out.println(routingTable[i].retNodeInfo());
+        }
+    }
+
+
+}
+
+
+public class Server1 extends Thread{
 
 
 
@@ -15,16 +72,14 @@ public class Server2 extends  Thread{
     public static EchoClient client;
     public static EchoServer server;
 
-
     private DatagramSocket socket;
     private boolean running;
     private byte[] buf = new byte[100];
 
 
-    public Server2(int port) throws Exception {
+    public Server1(int port) throws Exception {
         socket = new DatagramSocket(port);
     }
-
 
     public void run() {
 
@@ -45,13 +100,13 @@ public class Server2 extends  Thread{
                 int port = packet.getPort();
                 packet = new DatagramPacket(buf, buf.length, address, port);
                 String received=data(buf); // new String(packet.getData(), 0, packet.getLength());
-
+                //System.out.println(received);
 
                 updateRoutingTable(received);
 
 
-              //  System.out.println("iterate: "+(++cnt));
-               // System.out.println("r:  " +received);
+                //  System.out.println("iterate: "+(++cnt));
+                // System.out.println("r:  " +received);
 
                 if (received.equals("end")) {
                     running = false;
@@ -85,7 +140,6 @@ public class Server2 extends  Thread{
 
 
 
-
     public static void sendRoutingTable(String mynode)
     {
         try {
@@ -97,8 +151,7 @@ public class Server2 extends  Thread{
 
 
                 //  osr.writeBytes(sendData);
-                //System.out.println("s:  "+client.sendEcho(sendData, 2001));
-                client.sendEcho(sendData, 2001);
+                client.sendEcho(sendData, 2002);
 
                 //oss.writeUTF(sendData);
                 //System.out.println("->"+sendData);
@@ -125,12 +178,12 @@ public class Server2 extends  Thread{
 
             //System.out.println(Info[0]+" "+Info[1]+" "+Info[2]+"->"+Info[3]);
             //System.out.println(j+"->"+myrouter.routingTable[j].retNodeInfo()+ " "+(2+ cost));
-            if(myrouter.routingTable[to].cost> myrouter.routingTable[sender].cost+ cost)   //need change
-            {
-                myrouter.routingTable[to].cost=myrouter.routingTable[sender].cost+ cost;
-                myrouter.routingTable[to].nextHop=myrouter.routingTable[sender].dest;
+                if(myrouter.routingTable[to].cost> myrouter.routingTable[sender].cost+ cost)   //need change
+                {
+                    myrouter.routingTable[to].cost=myrouter.routingTable[sender].cost+ cost;
+                    myrouter.routingTable[to].nextHop=myrouter.routingTable[sender].dest;
 
-            }
+                }
 
 
 
@@ -143,12 +196,10 @@ public class Server2 extends  Thread{
     }
 
 
-
-
     public  static  void prepareRoutingTable()
     {
         try {
-            BufferedReader br = new BufferedReader(new FileReader("configB.txt"));
+            BufferedReader br = new BufferedReader(new FileReader("configA.txt"));
             String line;
             line = br.readLine();
             int nodes = Integer.valueOf(line);
@@ -176,36 +227,29 @@ public class Server2 extends  Thread{
 
 
 
-
     public static void main(String[] args) throws  Exception {
 
 
-
-
-        String mynode = "B";
+        String mynode = "A";
         int mynodeIdx = mynode.charAt(0) - 65;
-        String port ="2002";
+        String port ="2001";
         myrouter = new Router(mynodeIdx, port);
 
 
         prepareRoutingTable();
 
 
-         client=new EchoClient();
 
+           client=new EchoClient();
 
-
-        Server2 server= new Server2(2002);
+        Server1 server= new Server1(2001);
         server.start();
 
-         boolean running=true;
-
-
+        boolean running=true;
 
         while(running) {
 
             Thread.sleep(3000);
-           // System.out.println("I am in server2");
 
             myrouter.printRouter();
             sendRoutingTable(mynode);
