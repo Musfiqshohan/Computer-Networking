@@ -3,28 +3,25 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileReader;
 import java.net.*;
-
+import java.util.ArrayList;
 
 
 public class Server2 extends  Thread{
 
-
-
-
     public static Router myrouter;
     public static EchoClient client;
-    public static EchoServer server;
-
 
     private DatagramSocket socket;
     private boolean running;
     private byte[] buf = new byte[100];
+    public static ArrayList<Neighbour>neighbour= new ArrayList<Neighbour>();
+
+
 
 
     public Server2(int port) throws Exception {
         socket = new DatagramSocket(port);
     }
-
 
     public void run() {
 
@@ -39,19 +36,13 @@ public class Server2 extends  Thread{
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 socket.receive(packet);
 
-                //System.out.println("Client:-" + data(buf));
 
                 InetAddress address = packet.getAddress();
                 int port = packet.getPort();
                 packet = new DatagramPacket(buf, buf.length, address, port);
-                String received=data(buf); // new String(packet.getData(), 0, packet.getLength());
-
+                String received=data(buf);
 
                 updateRoutingTable(received);
-
-
-              //  System.out.println("iterate: "+(++cnt));
-               // System.out.println("r:  " +received);
 
                 if (received.equals("end")) {
                     running = false;
@@ -82,31 +73,30 @@ public class Server2 extends  Thread{
 
 
 
-
-
-
-
     public static void sendRoutingTable(String mynode)
     {
         try {
-            String sendData="";
-            for(int j=0;j<10;j++)
-            {
-                sendData= myrouter.routingTable[j].retNodeInfo();
-                sendData=mynode+" "+sendData;
 
+            for(int i=0;i<neighbour.size();i++) {
 
-                //  osr.writeBytes(sendData);
-                //System.out.println("s:  "+client.sendEcho(sendData, 2001));
-                client.sendEcho(sendData, 2001);
+                int sendToPort=Integer.valueOf(neighbour.get(i).port);
+                System.out.println("Sending to "+sendToPort);
 
-                //oss.writeUTF(sendData);
-                //System.out.println("->"+sendData);
+                String sendData = "";
+                for (int j = 0; j < 10; j++) {
+                    sendData = myrouter.routingTable[j].retNodeInfo();
+                    sendData = mynode + " " + sendData;
+                    System.out.println("s: "+sendData);
+                    client.sendEcho(sendData, sendToPort);
+
+                }
 
             }
-            // osr.writeBytes("----");
 
-        }catch (Exception e) {}
+
+        }catch (Exception e) {
+            System.out.println(e);
+        }
 
     }
 
@@ -116,15 +106,12 @@ public class Server2 extends  Thread{
         try {
 
 
-            //String Info[]= new String[4]
+
             String Info[] = line.split(" ");
             int cost= Integer.valueOf(Info[3]);
             int sender=Integer.valueOf(Info[0].charAt(0)-'A');
             int to=Integer.valueOf(Info[1].charAt(0)-'A');
 
-
-            //System.out.println(Info[0]+" "+Info[1]+" "+Info[2]+"->"+Info[3]);
-            //System.out.println(j+"->"+myrouter.routingTable[j].retNodeInfo()+ " "+(2+ cost));
             if(myrouter.routingTable[to].cost> myrouter.routingTable[sender].cost+ cost)   //need change
             {
                 myrouter.routingTable[to].cost=myrouter.routingTable[sender].cost+ cost;
@@ -133,16 +120,12 @@ public class Server2 extends  Thread{
             }
 
 
-
-
         } catch (Exception e) {
             System.out.println(e);
         }
         return 0;
 
     }
-
-
 
 
     public  static  void prepareRoutingTable()
@@ -155,13 +138,12 @@ public class Server2 extends  Thread{
 
             for (int i = 0; i < nodes; i++) {
                 line = br.readLine();
-                //System.out.println(line);
-
                 String input[] = line.split(" ");
                 int dest = input[0].charAt(0) - 65;
                 int cost = Integer.valueOf(input[1]);
 
                 myrouter.routingTable[dest] = new NodeInfo(input[0], input[0], cost);
+                neighbour.add(new Neighbour(input[0], input[2], cost));
 
             }
 
@@ -173,45 +155,35 @@ public class Server2 extends  Thread{
 
 
 
-
-
-
-
     public static void main(String[] args) throws  Exception {
-
-
 
 
         String mynode = "B";
         int mynodeIdx = mynode.charAt(0) - 65;
-        String port ="2002";
-        myrouter = new Router(mynodeIdx, port);
+        String myport ="2001";
+        myrouter = new Router(mynodeIdx, myport);
 
 
         prepareRoutingTable();
 
 
-         client=new EchoClient();
 
+        client=new EchoClient();
 
-
-        Server2 server= new Server2(2002);
+        Server2 server= new Server2(Integer.valueOf(myport));
         server.start();
 
-         boolean running=true;
 
-
+        boolean running=true;
+        Thread.sleep(3000);
 
         while(running) {
 
             Thread.sleep(3000);
-           // System.out.println("I am in server2");
 
-            myrouter.printRouter();
+            System.out.println("Mystatus:");
+             myrouter.printRouter();
             sendRoutingTable(mynode);
-
-       // System.out.println(client.sendEcho("hello to Server2", 2002));
-        //System.out.println(client.sendEcho("hello to Server3", 2223));
 
         }
 
@@ -219,6 +191,3 @@ public class Server2 extends  Thread{
 
 
 }
-
-
-
