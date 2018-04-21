@@ -6,7 +6,73 @@ import java.net.*;
 import java.util.ArrayList;
 
 
+
+
+class SendThread2 extends Thread{
+
+
+    int sendToPort;
+    String mynode;
+    public EchoClient client;
+    public boolean running;         //##
+    public boolean isAlive=false;  // :(
+    public int killed=0;       // :(
+
+
+    SendThread2(String mynode, String sendToPort)
+    {
+        try {
+
+            this.sendToPort=Integer.valueOf(sendToPort) ;
+            this.mynode=mynode;
+            client = new EchoClient();
+
+        }catch (Exception e){
+            System.out.println(e);}
+    }
+
+    public void run()
+    {
+
+        try {
+            running= true;
+            while(running) {
+
+
+                // int sendToPort = Integer.valueOf(neighbour.get(i).port);
+                // System.out.println("Sending to " + sendToPort);
+
+                String sendData = "";
+                for (int j = 0; j < 10; j++) {
+                    sendData = Server2.myrouter.routingTable[j].retNodeInfo();
+                    sendData = mynode + " " + sendData;
+                    // System.out.println("s: " + sendData);
+                    client.sendEcho(sendData, sendToPort);
+                    isAlive=true;   //:(
+                    killed=0;
+
+                }
+                System.out.println("sending to port: "+sendToPort);
+                Thread.sleep(4000);  // :(
+
+            }
+
+
+        }catch (Exception e) {
+            System.out.println(e);
+        }
+
+
+    }
+
+}
+
+
+
+
 public class Server2 extends  Thread{
+
+
 
     public static Router myrouter;
     public static EchoClient client;
@@ -128,10 +194,10 @@ public class Server2 extends  Thread{
     }
 
 
-    public  static  void prepareRoutingTable()
+    public  static  void prepareRoutingTable(String filename)
     {
         try {
-            BufferedReader br = new BufferedReader(new FileReader("configB.txt"));
+            BufferedReader br = new BufferedReader(new FileReader(filename));
             String line;
             line = br.readLine();
             int nodes = Integer.valueOf(line);
@@ -164,7 +230,7 @@ public class Server2 extends  Thread{
         myrouter = new Router(mynodeIdx, myport);
 
 
-        prepareRoutingTable();
+        prepareRoutingTable("configB.txt");
 
 
 
@@ -173,21 +239,59 @@ public class Server2 extends  Thread{
         Server2 server= new Server2(Integer.valueOf(myport));
         server.start();
 
+        ///Under Construction
+
+        Thread.sleep(5000);
+        SendThread2 sendThread[]= new SendThread2[15];
+        for(int i=0;i<neighbour.size();i++)  //neighbour.size()
+        {
+            sendThread[i]=new SendThread2(mynode, neighbour.get(i).port);
+            sendThread[i].start();
+
+        }
+
+
+
 
         boolean running=true;
-        Thread.sleep(3000);
 
+
+        System.out.println("start checking");
         while(running) {
 
             Thread.sleep(3000);
-
             System.out.println("Mystatus:");
-             myrouter.printRouter();
-            sendRoutingTable(mynode);
+            myrouter.printRouter();
+
+
+            ///Construction
+            for(int i=0;i<neighbour.size();i++)
+            {
+                if(sendThread[i].isAlive==false) {
+                    sendThread[i].running = false;
+
+                    if(sendThread[i].killed==0) {
+                        sendThread[i] = new SendThread2(mynode, neighbour.get(i).port);
+                        sendThread[i].killed++;
+                        sendThread[i].start();
+                        System.out.println("neighbour "+i+" killed once");
+                    }else{
+                        System.out.println("neighbour "+i+" killed twice hence terminating");
+                    }
+                }
+                else {sendThread[i].isAlive=false; }
+            }
+            ///Construction
+
+
 
         }
+
 
     }
 
 
 }
+
+
+

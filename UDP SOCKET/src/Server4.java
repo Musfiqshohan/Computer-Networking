@@ -6,106 +6,20 @@ import java.net.*;
 import java.util.ArrayList;
 
 
-class NodeInfo {
-    String dest,nextHop ;
-    int cost;
-
-    NodeInfo(String dest, String nextHop, int cost) {
-        this.dest = dest;
-        this.nextHop = nextHop;
-        this.cost = cost;
-    }
-
-    String retNodeInfo()
-    {
-        String ret="";
-        ret=dest+" "+nextHop+" "+cost;
-        return ret;
-    }
 
 
-}
-
-class Router {
-
-    int port,Rid;
-
-    NodeInfo routingTable[] = new NodeInfo[10];
-
-
-    Router(int myid, String port) {
-        this.Rid = myid;
-        this.port = Integer.valueOf(port);
-
-        for (int i = 0; i < 10; i++) {
-            String dest = "";
-            dest += (char) (i + 65);
-
-            if (i == myid) {
-                routingTable[i] = new NodeInfo(dest, dest, 0);
-            }
-            else
-                routingTable[i] = new NodeInfo(dest, "X", 100000);
-        }
-    }
-
-
-
-    void printRouter()
-    {
-        System.out.println(Rid+" "+port);
-        for(int i=0;i<10;i++)
-        {
-            System.out.println(routingTable[i].retNodeInfo());
-        }
-    }
-
-
-}
-
-
-
-class Neighbour{
-    public String name,port;
-    public int cost;
-
-    //public static boolean isAlive;   //##
-
-    Neighbour(String name , String port , int cost)
-    {
-        this.name=name;
-        this.port=port;
-        this.cost=cost;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getPort() {
-        return port;
-    }
-
-    public int getCost() {
-        return cost;
-    }
-}
-
-
-
-
- class SendThread1 extends Thread{
+class SendThread4 extends Thread{
 
 
     int sendToPort;
     String mynode;
     public EchoClient client;
     public boolean running;         //##
-     public boolean isAlive=false;  // :(
-     public int killed=0;       // :(
+    public boolean isAlive=false;  // :(
+    public int killed=0;       // :(
 
 
-    SendThread1(String mynode, String sendToPort)
+    SendThread4(String mynode, String sendToPort)
     {
         try {
 
@@ -125,19 +39,19 @@ class Neighbour{
             while(running) {
 
 
-                   // int sendToPort = Integer.valueOf(neighbour.get(i).port);
-                   // System.out.println("Sending to " + sendToPort);
+                // int sendToPort = Integer.valueOf(neighbour.get(i).port);
+                // System.out.println("Sending to " + sendToPort);
 
-                    String sendData = "";
-                    for (int j = 0; j < 10; j++) {
-                        sendData = Server1.myrouter.routingTable[j].retNodeInfo();
-                        sendData = mynode + " " + sendData;
-                       // System.out.println("s: " + sendData);
-                        client.sendEcho(sendData, sendToPort);
-                        isAlive=true;   //:(
-                        killed=0;
+                String sendData = "";
+                for (int j = 0; j < 10; j++) {
+                    sendData = Server4.myrouter.routingTable[j].retNodeInfo();
+                    sendData = mynode + " " + sendData;
+                    // System.out.println("s: " + sendData);
+                    client.sendEcho(sendData, sendToPort);
+                    isAlive=true;   //:(
+                    killed=0;
 
-                    }
+                }
                 System.out.println("sending to port: "+sendToPort);
                 Thread.sleep(4000);  // :(
 
@@ -156,7 +70,7 @@ class Neighbour{
 
 
 
-public class Server1 extends  Thread{
+public class Server4 extends  Thread{
 
 
 
@@ -171,7 +85,7 @@ public class Server1 extends  Thread{
 
 
 
-    public Server1(int port) throws Exception {
+    public Server4(int port) throws Exception {
         socket = new DatagramSocket(port);
     }
 
@@ -264,12 +178,12 @@ public class Server1 extends  Thread{
             int sender=Integer.valueOf(Info[0].charAt(0)-'A');
             int to=Integer.valueOf(Info[1].charAt(0)-'A');
 
-             if(myrouter.routingTable[to].cost> myrouter.routingTable[sender].cost+ cost)   //need change
-                {
-                    myrouter.routingTable[to].cost=myrouter.routingTable[sender].cost+ cost;
-                    myrouter.routingTable[to].nextHop=myrouter.routingTable[sender].dest;
+            if(myrouter.routingTable[to].cost> myrouter.routingTable[sender].cost+ cost)   //need change
+            {
+                myrouter.routingTable[to].cost=myrouter.routingTable[sender].cost+ cost;
+                myrouter.routingTable[to].nextHop=myrouter.routingTable[sender].dest;
 
-                }
+            }
 
 
         } catch (Exception e) {
@@ -306,38 +220,32 @@ public class Server1 extends  Thread{
     }
 
 
-    public void makeRountingInfinity()
-    {
-
-    }
-
-
 
     public static void main(String[] args) throws  Exception {
 
 
-        String mynode = "A";
+        String mynode = "D";
         int mynodeIdx = mynode.charAt(0) - 65;
-        String myport ="2000";
+        String myport ="2003";
         myrouter = new Router(mynodeIdx, myport);
 
 
-        prepareRoutingTable("configA.txt");
+        prepareRoutingTable("configD.txt");
 
 
 
         client=new EchoClient();
 
-        Server1 server= new Server1(Integer.valueOf(myport));
+        Server4 server= new Server4(Integer.valueOf(myport));
         server.start();
 
         ///Under Construction
 
         Thread.sleep(5000);
-        SendThread1 sendThread[]= new SendThread1[15];
+        SendThread4 sendThread[]= new SendThread4[15];
         for(int i=0;i<neighbour.size();i++)  //neighbour.size()
         {
-            sendThread[i]=new SendThread1(mynode, neighbour.get(i).port);
+            sendThread[i]=new SendThread4(mynode, neighbour.get(i).port);
             sendThread[i].start();
 
         }
@@ -363,17 +271,11 @@ public class Server1 extends  Thread{
                     sendThread[i].running = false;
 
                     if(sendThread[i].killed==0) {
-                        sendThread[i] = new SendThread1(mynode, neighbour.get(i).port);
+                        sendThread[i] = new SendThread4(mynode, neighbour.get(i).port);
                         sendThread[i].killed++;
                         sendThread[i].start();
                         System.out.println("neighbour "+i+" killed once");
-                    }
-                    else if(sendThread[i].killed==1)
-                    {
-                        //makeRountingInfinity();
-                        System.out.println("neighbour "+i+" just got shot");
-                    }
-                    else{
+                    }else{
                         System.out.println("neighbour "+i+" killed twice hence terminating");
                     }
                 }
