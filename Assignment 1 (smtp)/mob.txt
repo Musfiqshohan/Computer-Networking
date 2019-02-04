@@ -1,0 +1,48 @@
+
+
+TO: mob@172.16.5.220
+FROM: student-17 student17-H97M-D3H
+SUBJECT: this-is-test
+DATE:2018-1-23
+Message body:
+This is Networking Lab
+1111 222
+444   5555
+
+
+
+
+TO: mob@172.16.5.220
+FROM: student-17 student17-H97M-D3H
+SUBJECT: this-is-test
+DATE:2018-1-23
+Message body:
+This is Networking Lab
+1111 222
+444   5555
+
+
+
+
+TO: mob@172.16.5.220
+FROM: student-17 student17-H97M-D3H
+SUBJECT: this-is-test
+DATE:2018-1-23
+Message body:
+This is Networking Lab
+1111 222
+444   5555
+
+
+
+
+TO: mob@172.16.5.220
+FROM: student-17 student17-H97M-D3H
+SUBJECT: this-is-test
+DATE:2018-1-23
+Message body:
+This is Networking Lab
+1111 222
+444   5555
+
+
